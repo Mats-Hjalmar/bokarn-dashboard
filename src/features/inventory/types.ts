@@ -48,6 +48,10 @@ export type Allocation = {
   departure: string
   block_reason: string | null
   unit_pinned: boolean
+  /** Present on a booking, absent on a hold or a maintenance block. */
+  booking_id?: string
+  reference?: string
+  guest_name?: string
 }
 
 export type CalendarRow = {

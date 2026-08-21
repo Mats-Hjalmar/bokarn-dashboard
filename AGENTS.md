@@ -39,6 +39,14 @@ A feature is imported **only through its `index.ts`** (`@/features/calendar`,
 never `@/features/calendar/components/…`). Anything used by two or more
 features moves up to `components/` or `lib/`.
 
+One exception, and it is forced: `index.ts` reaches `lib/api/client`, which is
+server-only, so a **client** component importing a value from it pulls
+server-only code into the browser bundle and the build fails. A `'use server'`
+module is the only kind a client component may import a function from, so
+`features/<name>/actions.ts` is a second public entry point — client components
+import mutations from `@/features/<name>/actions` and types from
+`@/features/<name>` with `import type`.
+
 There is **no generated OpenAPI client** — types are hand-written in
 `features/<name>/types.ts` and paths are hand-written strings. `/openapi.json`
 and the Scalar UI at `/docs` are for humans.

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import type { CalendarRow } from '@/features/inventory'
+import type { Allocation, CalendarRow } from '@/features/inventory'
 import { getDictionary } from '@/lib/i18n'
 import { createBlock, removeBlock } from '../actions'
 
@@ -26,6 +26,35 @@ function nextDay(date: string): string {
 }
 
 type Selection = { unitId: string; from: string; to: string }
+
+/**
+ * A booking and a broken water tap are not the same thing, and colouring both
+ * amber made the chart unreadable: the one screen staff stare at all day could
+ * not answer "is this a guest or is this out of service?".
+ *
+ * A held pitch gets its own colour too, because it is occupancy that will
+ * probably evaporate in a quarter of an hour and staff should not phone anyone
+ * about it.
+ */
+function cellColour(a: Allocation): string {
+  switch (a.kind) {
+    case 'block':
+      return 'bg-zinc-400/80 dark:bg-zinc-500/70'
+    case 'hold':
+      return 'bg-sky-300/70 dark:bg-sky-400/50'
+    default:
+      return a.state === 'checked_in'
+        ? 'bg-emerald-400/85 dark:bg-emerald-500/70'
+        : 'bg-amber-400/80 dark:bg-amber-500/60'
+  }
+}
+
+function cellTitle(a: Allocation | undefined): string | undefined {
+  if (!a) return undefined
+  if (a.kind === 'block') return a.block_reason ?? t.calendar.blockHeading
+  if (a.kind === 'hold') return t.calendar.held
+  return [a.reference, a.guest_name].filter(Boolean).join(' · ')
+}
 
 export function TapeChart({
   rows,
@@ -136,6 +165,22 @@ export function TapeChart({
         </p>
       ) : null}
 
+      <ul className="text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+        <li className="sr-only">{t.calendar.legend}</li>
+        <Key colour="bg-amber-400/80 dark:bg-amber-500/60">
+          {t.calendar.legendBooking}
+        </Key>
+        <Key colour="bg-emerald-400/85 dark:bg-emerald-500/70">
+          {t.calendar.legendCheckedIn}
+        </Key>
+        <Key colour="bg-sky-300/70 dark:bg-sky-400/50">
+          {t.calendar.legendHold}
+        </Key>
+        <Key colour="bg-zinc-400/80 dark:bg-zinc-500/70">
+          {t.calendar.legendBlock}
+        </Key>
+      </ul>
+
       <div className="overflow-x-auto rounded-lg border select-none">
         <div className="min-w-max">
           <div
@@ -170,23 +215,38 @@ export function TapeChart({
                   <button
                     key={date}
                     type="button"
-                    title={allocation?.block_reason ?? undefined}
+                    title={cellTitle(allocation)}
                     aria-label={`${row.unit.code} ${date}`}
                     onMouseDown={() => startDrag(row.unit.id, date)}
                     onMouseEnter={() => extendDrag(row.unit.id, date)}
                     onMouseUp={() => endDrag(row.unit.id, date)}
                     onDoubleClick={
-                      allocation ? () => drop(allocation.id) : undefined
+                      allocation?.kind === 'block'
+                        ? () => drop(allocation.id)
+                        : undefined
                     }
                     className={[
                       'h-7 border-l transition-colors',
                       allocation
-                        ? 'bg-amber-400/80 dark:bg-amber-500/60'
+                        ? cellColour(allocation)
                         : selected
                           ? 'bg-sky-400/70'
                           : 'hover:bg-muted',
                     ].join(' ')}
-                  />
+                  >
+                    {/*
+                      The guest's name is written once per stay, on its first
+                      night, and allowed to run over the cells that follow. A
+                      name repeated in every cell is unreadable, and a chart
+                      with no names on it is a chart reception cannot work
+                      from.
+                    */}
+                    {allocation?.guest_name && allocation.arrival === date ? (
+                      <span className="pointer-events-none relative z-10 block w-max max-w-40 truncate pl-1 text-left text-[11px] font-medium text-black/80">
+                        {allocation.guest_name}
+                      </span>
+                    ) : null}
+                  </button>
                 )
               })}
             </div>
@@ -227,5 +287,20 @@ export function TapeChart({
         </div>
       ) : null}
     </div>
+  )
+}
+
+function Key({
+  colour,
+  children,
+}: {
+  colour: string
+  children: React.ReactNode
+}) {
+  return (
+    <li className="flex items-center gap-1.5">
+      <span className={`inline-block size-3 rounded-sm ${colour}`} />
+      {children}
+    </li>
   )
 }

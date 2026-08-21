@@ -1,4 +1,11 @@
-import { CalendarDays, MapPinned, Tags, type LucideIcon } from 'lucide-react'
+import {
+  CalendarDays,
+  ConciergeBell,
+  MapPinned,
+  NotebookTabs,
+  Tags,
+  type LucideIcon,
+} from 'lucide-react'
 
 /**
  * Permission keys the dashboard gates its sections on. These mirror the
@@ -30,7 +37,9 @@ export type NavSection = {
 
 /** The sidebar, in order. Grows as milestones land. */
 export const sections: readonly NavSection[] = [
+  { href: '/reception', label: 'Reception', icon: ConciergeBell },
   { href: '/kalender', label: 'Kalender', icon: CalendarDays },
+  { href: '/bokningar', label: 'Bokningar', icon: NotebookTabs },
   { href: '/platser', label: 'Platser', icon: MapPinned },
   { href: '/priser', label: 'Priser', icon: Tags },
 ]
