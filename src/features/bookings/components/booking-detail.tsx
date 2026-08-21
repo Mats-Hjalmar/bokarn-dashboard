@@ -6,25 +6,37 @@ import { AlertCircle, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { dateTime, longDate, money } from '@/lib/format'
 import { getDictionary } from '@/lib/i18n'
-import { cancelBooking, checkIn, checkOut } from '../actions'
+import { cancelBooking, checkIn, checkOut, reassign } from '../actions'
 import type { BookingDetail } from '../types'
+import type { Unit } from '@/features/inventory'
 import { StateBadge } from './booking-list'
 
 const t = getDictionary()
 
-export function BookingDetailView({ booking }: { booking: BookingDetail }) {
+export function BookingDetailView({
+  booking,
+  units,
+}: {
+  booking: BookingDetail
+  units: Unit[]
+}) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [cancelling, setCancelling] = useState(false)
   const [reason, setReason] = useState('')
+  const [moveTo, setMoveTo] = useState('')
 
   async function run(action: () => Promise<{ ok: boolean; error?: string }>) {
     setBusy(true)
     setError(null)
     const result = await action()
     setBusy(false)
-    if (!result.ok) setError(result.error ?? t.common.failed)
-    else setCancelling(false)
+    if (!result.ok) {
+      setError(result.error ?? t.common.failed)
+      return
+    }
+    setCancelling(false)
+    setMoveTo('')
   }
 
   return (
@@ -244,6 +256,45 @@ export function BookingDetailView({ booking }: { booking: BookingDetail }) {
                 </span>
               )}
             </p>
+
+            {/*
+              Moving a guest is offered while they are booked or on site, and
+              only within their category — a four-berth cabin is not a
+              substitute for a pitch. The database refuses a move onto an
+              occupied pitch, so there is no availability check here: asking
+              first would be a race as well as a second copy of the same rule.
+            */}
+            {units.length > 0 &&
+            (booking.state === 'confirmed' ||
+              booking.state === 'checked_in') ? (
+              <div className="mt-3 flex flex-wrap items-end gap-2">
+                <label className="grid gap-1.5 text-sm">
+                  <span className="text-muted-foreground text-xs">
+                    {t.bookings.moveTo}
+                  </span>
+                  <select
+                    value={moveTo}
+                    onChange={(event) => setMoveTo(event.target.value)}
+                    className="border-input bg-background rounded-md border px-3 py-1.5"
+                  >
+                    <option value="">—</option>
+                    {units.map((unit) => (
+                      <option key={unit.id} value={unit.id}>
+                        {unit.code}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={busy || moveTo === ''}
+                  onClick={() => run(() => reassign(booking.id, moveTo))}
+                >
+                  {t.bookings.move}
+                </Button>
+              </div>
+            ) : null}
           </Panel>
 
           <Panel title={t.bookings.requirements}>

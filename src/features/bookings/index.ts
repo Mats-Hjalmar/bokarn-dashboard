@@ -11,11 +11,4 @@
 export { fetchBooking, fetchBookings, fetchFrontdesk } from './api'
 export { BookingList } from './components/booking-list'
 export { BookingDetailView } from './components/booking-detail'
-export type {
-  BookingDetail,
-  BookingEvent,
-  BookingSummary,
-  Frontdesk,
-  PriceLine,
-  Requirement,
-} from './types'
+export type { BookingDetail, BookingSummary, Frontdesk } from './types'

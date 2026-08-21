@@ -44,6 +44,8 @@ export const sv = {
     history: 'Händelser',
     pitchPending: 'Ej tilldelad',
     pinned: 'fast',
+    moveTo: 'Flytta till',
+    move: 'Flytta',
     back: 'Tillbaka till bokningar',
     channelWeb: 'Webb',
     channelDesk: 'Reception',
