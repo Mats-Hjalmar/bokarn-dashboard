@@ -11,5 +11,5 @@ export function kratosStaffURL(): string {
   if (process.env.NODE_ENV === 'production') {
     throw new Error('BOKARN_KRATOS_STAFF_URL is not set')
   }
-  return 'http://localhost:4733'
+  return 'http://auth-staff.bokarn.localhost'
 }

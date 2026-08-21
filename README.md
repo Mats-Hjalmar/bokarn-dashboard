@@ -21,10 +21,10 @@ from there with `make dev` rather than starting this on its own.
 
 ```sh
 bun install
-bun run dev        # http://localhost:3400
+bun run dev        # http://dashboard.bokarn.localhost
 ```
 
-Needs the API on :1437 and the staff identity service on :4733 — `make dev` in
+Needs the API at http://api.bokarn.localhost and the staff identity service at http://auth-staff.bokarn.localhost — `make dev` in
 the umbrella repo starts both.
 
 After every change: `bun run format` → `bun run lint` → `bun run typecheck` →
